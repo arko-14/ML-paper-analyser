@@ -4,10 +4,9 @@ import pdfplumber
 import google.generativeai as genai
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
-from fpdf import FPDF
 
 # 🔹 Replace this with your actual Gemini API key
-GEMINI_API_KEY = "AIzaSyDJiCkjjOJzbQP3kDu7F5ku9CuSOMy4JBk"
+GEMINI_API_KEY = "YOUR_API_KEY"
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
@@ -41,17 +40,6 @@ def summarize_with_gemini(text):
     response = model.generate_content(f"Summarize this research paper:\n\n{text}")
     return response.text if response else "Failed to generate summary."
 
-# Function to save the summary as a PDF
-def save_summary_as_pdf(summary, filename):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, summary)
-    
-    pdf.output(filename)
-
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -74,12 +62,13 @@ def summarize():
 
     summary = summarize_with_gemini(text)
 
-    # Save the summary to a PDF file
-    pdf_filename = "summary.pdf"
-    pdf_path = os.path.join("uploads", pdf_filename)
-    save_summary_as_pdf(summary, pdf_path)
+    # Create a summary file
+    summary_filename = "summary.txt"
+    summary_path = os.path.join("uploads", summary_filename)
+    with open(summary_path, "w") as summary_file:
+        summary_file.write(summary)
 
-    return jsonify({"summary": summary, "download_link": pdf_filename})
+    return jsonify({"summary": summary, "download_link": summary_filename})
 
 @app.route('/download/<filename>')
 def download_file(filename):
