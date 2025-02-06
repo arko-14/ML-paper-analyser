@@ -1,0 +1,23 @@
+**Summary: Machine Learning Methods for Lung Cancer Level Classification**
+
+This research thoroughly examines the application of machine learning (ML) models in accurately classifying lung cancer stages.
+
+**Methodology:**
+
+- A comprehensive dataset of lung cancer patient data was collected from various sources.
+- Nine ML models were employed: XGBoost, LGBM, Adaboost, Logistic Regression, Decision Tree, Random Forest, CatBoost, k-NN, and DNN.
+- Hyperparameter optimization was performed to minimize overfitting and improve model performance, focusing on minimum child weight and learning rate.
+
+**Key Findings:**
+
+- XGBoost, LGBM, and Logistic Regression outperformed other models, achieving accuracies of nearly 100%.
+- Adaboost exhibited sensitivity to learning rate adjustments.
+- Random Forest, CatBoost, and k-NN also demonstrated high accuracy and stability.
+- DNN, despite its ability to detect complex patterns, was outperformed by traditional ML models.
+
+**Conclusions:**
+
+- Careful consideration of hyperparameters is crucial to optimize ML model performance for lung cancer classification.
+- Conventional ML models like XGBoost, LGBM, and Logistic Regression offer superior accuracy and generalization capabilities.
+- These models can effectively support clinicians in lung cancer diagnosis and treatment planning.
+- Further research should focus on exploring larger datasets and advanced ML techniques to enhance predictive accuracy and clinical utility.
