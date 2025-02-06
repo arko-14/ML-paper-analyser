@@ -29,12 +29,14 @@ app = Flask(__name__)
 # Utility Functions
 # ----------------------------
 def extract_text_from_pdf(pdf_path):
-    """Extracts text from a PDF file."""
-    text = ""
+    """Extracts text from a PDF file, skipping pages with no text."""
+    text = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
-            text += page.extract_text() + "\n"
-    return text.strip()
+            page_text = page.extract_text()
+            if page_text:
+                text.append(page_text)
+    return "\n".join(text).strip()
 
 def extract_text_from_url(url):
     """Extracts text from a webpage URL."""
@@ -49,6 +51,16 @@ def extract_text_from_url(url):
     except Exception as e:
         print("Error extracting text from URL:", e)
         return None
+
+def limit_text(text, max_words=2000):
+    """Limit the text to a maximum number of words for faster processing."""
+    words = text.split()
+    if len(words) > max_words:
+        return " ".join(words[:max_words])
+    return text
+
+# Precompile a regex pattern for sentence splitting
+SENTENCE_SPLIT_REGEX = re.compile(r'(?<=[.!?])\s+')
 
 # ----------------------------
 # Fallback Summarization Methods
@@ -92,7 +104,7 @@ def simple_fallback_summarizer(text):
     A very basic fallback that returns the first five sentences of the text.
     """
     try:
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = SENTENCE_SPLIT_REGEX.split(text)
         sentences = [s.strip() for s in sentences if s.strip()]
         if len(sentences) >= 5:
             summary = '. '.join(sentences[:5])
@@ -111,16 +123,18 @@ def fallback_summarizer(text):
     1. TextRank summarization.
     2. Gensim summarization (if available).
     3. Simple fallback (first 5 sentences).
+    We limit the text size first to speed up processing.
     """
-    summary = text_rank_summarizer(text)
+    limited_text = limit_text(text)
+    summary = text_rank_summarizer(limited_text)
     if summary and summary.strip():
         return summary
 
-    summary = gensim_nlp_summarizer(text)
+    summary = gensim_nlp_summarizer(limited_text)
     if summary and summary.strip():
         return summary
 
-    return simple_fallback_summarizer(text)
+    return simple_fallback_summarizer(limited_text)
 
 # ----------------------------
 # Primary Summarization Function
