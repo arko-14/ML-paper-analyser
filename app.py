@@ -1,8 +1,3 @@
-import nltk
-
-# Download required NLTK resources
-nltk.download('punkt')
-nltk.download('stopwords')
 import os
 import re
 import requests
@@ -10,8 +5,7 @@ import pdfplumber
 import google.generativeai as genai
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
-from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
-from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Fallback summarizer libraries for TextRank
 from sumy.parsers.plaintext import PlaintextParser
@@ -139,7 +133,7 @@ def simple_fallback_summarizer(text):
         return "Failed to generate summary using fallback methods."
 
 # ----------------------------
-# Concurrent Summarization with Timeouts
+# Concurrent Summarization
 # ----------------------------
 def concurrent_summarize(text):
     """
@@ -147,51 +141,31 @@ def concurrent_summarize(text):
       - Gemini API call (full text)
       - TextRank summarization (on limited text)
       - Gensim summarization (on limited text)
-    Returns the first valid summary that is produced or falls back to a simple summarizer.
-    Each task has a per-call timeout.
+    Returns the first valid summary that is produced.
     """
     limited_text = limit_text(text)
-    methods = {
-        "gemini": gemini_api_call,
-        "text_rank": text_rank_summarizer,
-        "gensim": gensim_nlp_summarizer
-    }
-    results = {}
     with ThreadPoolExecutor(max_workers=3) as executor:
+        # Submit tasks concurrently
         future_to_method = {
-            executor.submit(method, text if name == "gemini" else limited_text): name
-            for name, method in methods.items()
+            executor.submit(gemini_api_call, text): "gemini",
+            executor.submit(text_rank_summarizer, limited_text): "text_rank",
+            executor.submit(gensim_nlp_summarizer, limited_text): "gensim"
         }
         for future in as_completed(future_to_method):
-            method_name = future_to_method[future]
-            try:
-                # Set a timeout for each method (in seconds)
-                result = future.result(timeout=5)
-                if result and result.strip():
-                    print(f"{method_name} method succeeded.")
-                    return result
-                else:
-                    print(f"{method_name} method returned an empty summary.")
-            except TimeoutError:
-                print(f"{method_name} method timed out.")
-            except Exception as e:
-                print(f"{method_name} method failed with exception: {e}")
-
-    # If none of the concurrent tasks produce a valid summary, use the simple fallback.
-    print("Falling back to simple summarizer.")
+            result = future.result()
+            if result and result.strip():
+                return result
+    # If none of the concurrent tasks produce a valid summary, use the simple fallback
     return simple_fallback_summarizer(limited_text)
 
-@lru_cache(maxsize=32)
-def cached_summarize(text):
-    """Caches the summarization result for a given text."""
-    return concurrent_summarize(text)
-
+# ----------------------------
+# Primary Summarization Function
+# ----------------------------
 def summarize_with_concurrency(text):
     """
     Attempts to summarize the text by running multiple methods concurrently.
-    Uses caching to avoid reprocessing the same text.
     """
-    return cached_summarize(text)
+    return concurrent_summarize(text)
 
 # ----------------------------
 # Flask Routes
