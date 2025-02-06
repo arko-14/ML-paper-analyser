@@ -194,8 +194,12 @@
                     alert("❌ Failed to generate summary. Try again!");
                 }
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while processing the request.");
+            });
         });
     </script>
 </body>
 </html>
+
