@@ -39,7 +39,7 @@ def extract_text_from_pdf(pdf_path):
     return "\n".join(text).strip()
 
 def extract_text_from_url(url):
-   """Extracts text from a webpage URL."""
+    """Extracts text from a webpage URL."""
     try:
         response = requests.get(url, timeout=10)
         if response.status_code != 200:
@@ -201,6 +201,3 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
-
-
-
