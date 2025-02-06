@@ -5,6 +5,7 @@ import pdfplumber
 import google.generativeai as genai
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Fallback summarizer libraries for TextRank
 from sumy.parsers.plaintext import PlaintextParser
@@ -30,13 +31,13 @@ app = Flask(__name__)
 # ----------------------------
 def extract_text_from_pdf(pdf_path):
     """Extracts text from a PDF file, skipping pages with no text."""
-    text = []
+    texts = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
-                text.append(page_text)
-    return "\n".join(text).strip()
+                texts.append(page_text)
+    return "\n".join(texts).strip()
 
 def extract_text_from_url(url):
     """Extracts text from a webpage URL."""
@@ -63,8 +64,22 @@ def limit_text(text, max_words=2000):
 SENTENCE_SPLIT_REGEX = re.compile(r'(?<=[.!?])\s+')
 
 # ----------------------------
-# Fallback Summarization Methods
+# Individual Summarization Methods
 # ----------------------------
+def gemini_api_call(text):
+    """
+    Attempts to summarize text using the Gemini API.
+    Returns the summary if successful, or None on failure.
+    """
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(f"Summarize this research paper in simple words:\n\n{text}")
+        if response and response.text:
+            return response.text
+    except Exception as e:
+        print("Gemini API failed:", e)
+    return None
+
 def text_rank_summarizer(text):
     """
     Uses the TextRank algorithm via Sumy to extract key sentences.
@@ -117,43 +132,40 @@ def simple_fallback_summarizer(text):
         print("Simple fallback summarizer failed:", e)
         return "Failed to generate summary using fallback methods."
 
-def fallback_summarizer(text):
+# ----------------------------
+# Concurrent Summarization
+# ----------------------------
+def concurrent_summarize(text):
     """
-    Attempts different summarization techniques in order:
-    1. TextRank summarization.
-    2. Gensim summarization (if available).
-    3. Simple fallback (first 5 sentences).
-    We limit the text size first to speed up processing.
+    Runs multiple summarization methods concurrently:
+      - Gemini API call (full text)
+      - TextRank summarization (on limited text)
+      - Gensim summarization (on limited text)
+    Returns the first valid summary that is produced.
     """
     limited_text = limit_text(text)
-    summary = text_rank_summarizer(limited_text)
-    if summary and summary.strip():
-        return summary
-
-    summary = gensim_nlp_summarizer(limited_text)
-    if summary and summary.strip():
-        return summary
-
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        # Submit tasks concurrently
+        future_to_method = {
+            executor.submit(gemini_api_call, text): "gemini",
+            executor.submit(text_rank_summarizer, limited_text): "text_rank",
+            executor.submit(gensim_nlp_summarizer, limited_text): "gensim"
+        }
+        for future in as_completed(future_to_method):
+            result = future.result()
+            if result and result.strip():
+                return result
+    # If none of the concurrent tasks produce a valid summary, use the simple fallback
     return simple_fallback_summarizer(limited_text)
 
 # ----------------------------
 # Primary Summarization Function
 # ----------------------------
-def summarize_with_gemini(text):
+def summarize_with_concurrency(text):
     """
-    Tries to summarize text using the Gemini API.
-    If that fails, falls back to local summarization techniques.
+    Attempts to summarize the text by running multiple methods concurrently.
     """
-    try:
-        model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(f"Summarize this research paper in simple words:\n\n{text}")
-        if response and response.text:
-            return response.text
-    except Exception as e:
-        print("Gemini API failed:", e)
-
-    # If Gemini summarization fails, use fallback summarization techniques
-    return fallback_summarizer(text)
+    return concurrent_summarize(text)
 
 # ----------------------------
 # Flask Routes
@@ -163,7 +175,7 @@ def home():
     return render_template("index.html")
 
 @app.route("/summarize", methods=["POST"])
-def summarize():
+def summarize_route():
     text = None
 
     if "pdf_file" in request.files and request.files["pdf_file"].filename != "":
@@ -177,7 +189,7 @@ def summarize():
     if not text:
         return jsonify({"error": "No valid input provided or could not extract text."}), 400
 
-    summary = summarize_with_gemini(text)
+    summary = summarize_with_concurrency(text)
 
     # Create a summary file
     summary_filename = "summary.txt"
@@ -201,3 +213,4 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
+
