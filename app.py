@@ -1,14 +1,21 @@
 import os
+import re
 import requests
 import pdfplumber
 import google.generativeai as genai
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
 
-# Fallback summarizer library for TextRank
+# Fallback summarizer libraries for TextRank
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.text_rank import TextRankSummarizer
+
+# Attempt to import gensim's summarizer
+try:
+    from gensim.summarization import summarize as gensim_summarize
+except ImportError:
+    gensim_summarize = None
 
 # 🔹 Replace this with your actual Gemini API key
 GEMINI_API_KEY = "AIzaSyDJiCkjjOJzbQP3kDu7F5ku9CuSOMy4JBk"
@@ -18,16 +25,19 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 
-# Function to extract text from a PDF
+# ----------------------------
+# Utility Functions
+# ----------------------------
 def extract_text_from_pdf(pdf_path):
+    """Extracts text from a PDF file."""
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text += page.extract_text() + "\n"
     return text.strip()
 
-# Function to extract text from a webpage
 def extract_text_from_url(url):
+    """Extracts text from a webpage URL."""
     try:
         response = requests.get(url, timeout=10)
         if response.status_code != 200:
@@ -40,20 +50,86 @@ def extract_text_from_url(url):
         print("Error extracting text from URL:", e)
         return None
 
-# Fallback summarizer using TextRank (Sumy)
-def fallback_summarizer(text):
+# ----------------------------
+# Fallback Summarization Methods
+# ----------------------------
+def text_rank_summarizer(text):
+    """
+    Uses the TextRank algorithm via Sumy to extract key sentences.
+    Returns a summary string or None if it fails.
+    """
     try:
         parser = PlaintextParser.from_string(text, Tokenizer("english"))
         summarizer = TextRankSummarizer()
         summary_sentences = summarizer(parser.document, 5)  # Extract 5 key sentences
         summary = " ".join(str(sentence) for sentence in summary_sentences)
-        return summary if summary else "Fallback summarization produced no result."
+        if summary:
+            return summary
     except Exception as e:
         print("TextRank summarization failed:", e)
+    return None
+
+def gensim_nlp_summarizer(text):
+    """
+    Uses Gensim's summarizer (an NLP-based technique) to summarize the text.
+    Returns the summary or None if it fails.
+    """
+    if not gensim_summarize:
+        print("Gensim is not available.")
+        return None
+
+    try:
+        # Gensim's summarize may fail if the text is too short or not well-formed.
+        summary = gensim_summarize(text)
+        if summary:
+            return summary
+    except Exception as e:
+        print("Gensim summarization failed:", e)
+    return None
+
+def simple_fallback_summarizer(text):
+    """
+    A very basic fallback that returns the first five sentences of the text.
+    """
+    try:
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 5:
+            summary = '. '.join(sentences[:5])
+            if not summary.endswith('.'):
+                summary += '.'
+        else:
+            summary = text
+        return summary
+    except Exception as e:
+        print("Simple fallback summarizer failed:", e)
         return "Failed to generate summary using fallback methods."
 
-# Function to summarize text using Gemini API with fallback
+def fallback_summarizer(text):
+    """
+    Attempts different summarization techniques in order:
+    1. TextRank summarization.
+    2. Gensim summarization (if available).
+    3. Simple fallback (first 5 sentences).
+    """
+    summary = text_rank_summarizer(text)
+    if summary and summary.strip():
+        return summary
+
+    summary = gensim_nlp_summarizer(text)
+    if summary and summary.strip():
+        return summary
+
+    return simple_fallback_summarizer(text)
+
+# ----------------------------
+# Primary Summarization Function
+# ----------------------------
 def summarize_with_gemini(text):
+    """
+    Tries to summarize text using the Gemini API.
+    If that fails, falls back to local summarization techniques.
+    """
     try:
         model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(f"Summarize this research paper in simple words:\n\n{text}")
@@ -61,10 +137,13 @@ def summarize_with_gemini(text):
             return response.text
     except Exception as e:
         print("Gemini API failed:", e)
-    
-    # If Gemini summarization fails, use the fallback summarizer (TextRank)
+
+    # If Gemini summarization fails, use fallback summarization techniques
     return fallback_summarizer(text)
 
+# ----------------------------
+# Flask Routes
+# ----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
