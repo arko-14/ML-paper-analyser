@@ -39,7 +39,7 @@ def extract_text_from_pdf(pdf_path):
     return "\n".join(text).strip()
 
 def extract_text_from_url(url):
-    """Extracts text from a webpage URL."""
+   """Extracts text from a webpage URL."""
     try:
         response = requests.get(url, timeout=10)
         if response.status_code != 200:
@@ -146,7 +146,7 @@ def summarize_with_gemini(text):
     """
     try:
         model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(f"Summarize this research paper in simple words:\n\n{text}")
+        response = model.generate_content(f"Summarize this research paper comprehensively across these key dimensions:\n\nResearch Context:\n- Domain\n- Research Question\n- Significance\n\nMethodology:\n- Design\n- Data Collection\n- Analytical Approach\n\nKey Findings:\n- Primary Outcomes\n- Statistical Significance\n- Novel Discoveries\n\nImplications:\n- Theoretical Impact\n- Practical Applications\n- Future Research Directions\n\nPaper Text:\n{text}")
         if response and response.text:
             return response.text
     except Exception as e:
