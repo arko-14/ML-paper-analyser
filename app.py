@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
 
 # 🔹 Replace this with your actual Gemini API key
-GEMINI_API_KEY = "YOUR_API_KEY"
+GEMINI_API_KEY = "AIzaSyDJiCkjjOJzbQP3kDu7F5ku9CuSOMy4JBk"
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
