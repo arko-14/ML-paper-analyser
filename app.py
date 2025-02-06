@@ -37,7 +37,7 @@ def extract_text_from_url(url):
 # Function to summarize using Gemini API
 def summarize_with_gemini(text):
     model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(f"Summarize this research paper:\n\n{text}")
+    response = model.generate_content(f"Summarize this research paper in simple words:\n\n{text}")
     return response.text if response else "Failed to generate summary."
 
 @app.route("/")
