@@ -1,3 +1,8 @@
+import nltk
+
+# Download required NLTK resources
+nltk.download('punkt')
+nltk.download('stopwords')
 import os
 import re
 import requests
