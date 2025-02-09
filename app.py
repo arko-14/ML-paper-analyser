@@ -100,7 +100,7 @@ def text_rank_summarizer(text):
     try:
         parser = PlaintextParser.from_string(text, Tokenizer("english"))
         summarizer = TextRankSummarizer()
-        summary_sentences = summarizer(parser.document, 5)  # Extract 5 key sentences
+        summary_sentences = summarizer(parser.document, 100)  # Extract 5 key sentences
         summary = " ".join(str(sentence) for sentence in summary_sentences)
         if summary:
             return summary
@@ -164,6 +164,25 @@ def fallback_summarizer(text):
     return simple_fallback_summarizer(limited_text)
 
 # ----------------------------
+# Formatting Gemini Response
+# ----------------------------
+def format_gemini_response(text):
+    """
+    Inserts extra newlines between sections in the Gemini response for better readability.
+    Assumes that sections start with one of the following headers.
+    """
+    section_headers = [
+        "Research Context:",
+        "Methodology:",
+        "Key Findings:",
+        "Implications:"
+    ]
+    for header in section_headers:
+        # Insert two newlines before the header if not already present.
+        text = text.replace(header, "\n\n" + header + "\n")
+    return text.strip()
+
+# ----------------------------
 # Primary Summarization Function
 # ----------------------------
 def summarize_with_gemini(text):
@@ -182,7 +201,8 @@ def summarize_with_gemini(text):
             f"Paper Text:\n{text}"
         )
         if response and response.text:
-            return response.text
+            # Format the response for better readability.
+            return format_gemini_response(response.text)
     except Exception as e:
         print("Gemini API failed:", e)
 
@@ -264,3 +284,4 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
+
