@@ -1,246 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paperdigest</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paperdigest</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-        .container {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 30px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-            width: 400px;
-            text-align: center;
-            transition: transform 0.3s ease-in-out;
-        }
+    .container {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+      width: 400px;
+      text-align: center;
+      transition: transform 0.3s ease-in-out;
+    }
 
-        .container:hover {
-            transform: scale(1.05);
-        }
+    .container:hover {
+      transform: scale(1.05);
+    }
 
-        h2 {
-            margin-bottom: 20px;
-        }
+    h2 {
+      margin-bottom: 20px;
+    }
 
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
 
-        input {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-align: center;
-        }
+    input {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
 
-        input::placeholder {
-            color: #ddd;
-        }
+    input::placeholder {
+      color: #ddd;
+    }
 
-        button {
-            background: #ff6b6b;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease-in-out;
-        }
+    button {
+      background: #ff6b6b;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease-in-out;
+    }
 
-        button:hover {
-            background: #ff4757;
-        }
+    button:hover {
+      background: #ff4757;
+    }
 
-        .summary-box {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        }
+    .summary-box {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
 
-        .summary-box h3 {
-            margin-bottom: 10px;
-        }
+    .summary-box h3 {
+      margin-bottom: 10px;
+    }
 
-        .download-link {
-            margin-top: 10px;
-            padding: 10px;
-            background: #ff6b6b;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-        }
+    .download-link {
+      margin-top: 10px;
+      padding: 10px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+    }
 
-        .download-link:hover {
-            background: #ff4757;
-        }
+    .download-link:hover {
+      background: #ff4757;
+    }
 
-        .share-btn {
-            margin-top: 15px;
-            padding: 10px;
-            background: #ff6b6b;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease-in-out;
-        }
+    .share-btn {
+      margin-top: 15px;
+      padding: 10px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease-in-out;
+    }
 
-        .share-btn:hover {
-            background: #ff4757;
-        }
-    </style>
+    .share-btn:hover {
+      background: #ff4757;
+    }
+    footer a {
+      text-decoration: none;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>📄 Research Paper Summarizer</h2>
-
-        <form id="summarizeForm">
-            <input type="file" id="pdfFile" name="pdf_file" accept="application/pdf">
-            <input type="text" id="paperUrl" name="paper_url" placeholder="Enter research paper URL">
-            <button type="submit">Summarize</button>
-        </form>
-
-        <div class="summary-box" id="summaryBox">
-            <h3>📌 Summary:</h3>
-            <p id="summaryText"></p>
-            <!-- New reading time display element -->
-            <p id="readingTime"></p>
-            <a id="downloadLink" class="download-link" href="" download>Download Summary</a>
-            <button id="shareButton" class="share-btn">Share</button>
-        </div>
-
-        <div id="counter-display">
-            Papers Summarized: <span id="papers-count">0</span>
-        </div>
+  <div class="container">
+    <h2>📄 Research Paper Summarizer</h2>
+    <form id="summarizeForm">
+      <input type="file" id="pdfFile" name="pdf_file" accept="application/pdf">
+      <p>OR</p>
+      <input type="text" id="paperUrl" name="paper_url" placeholder="Enter research paper URL">
+      <button type="submit">Summarize</button>
+    </form>
+    <div class="summary-box" id="summaryBox">
+      <h3>📌 Summary:</h3>
+      <p id="summaryText"></p>
+      <!-- New reading time display element -->
+      <p id="readingTime"></p>
+      <a id="downloadLink" class="download-link" href="" download>Download Summary</a>
+      <button id="shareButton" class="share-btn">Share</button>
     </div>
-
-    <script>
-        document.getElementById("summarizeForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-
-            let formData = new FormData();
-            let pdfFile = document.getElementById("pdfFile").files[0];
-            let paperUrl = document.getElementById("paperUrl").value;
-
-            if (pdfFile) {
-                formData.append("pdf_file", pdfFile);
-            } else if (paperUrl.trim()) {
-                formData.append("paper_url", paperUrl);
-            } else {
-                alert("⚠️ Please upload a PDF or enter a URL!");
-                return;
+    <div id="counter-display">
+      Papers Summarized: <span id="papers-count">0</span>
+    </div>
+  </div>
+  <script>
+    document.getElementById("summarizeForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      let formData = new FormData();
+      let pdfFile = document.getElementById("pdfFile").files[0];
+      let paperUrl = document.getElementById("paperUrl").value;
+      if (pdfFile) {
+        formData.append("pdf_file", pdfFile);
+      } else if (paperUrl.trim()) {
+        formData.append("paper_url", paperUrl);
+      } else {
+        alert("⚠️ Please upload a PDF or enter a URL!");
+        return;
+      }
+      fetch("/summarize", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        let summaryBox = document.getElementById("summaryBox");
+        let summaryText = document.getElementById("summaryText");
+        let readingTime = document.getElementById("readingTime");
+        let downloadLink = document.getElementById("downloadLink");
+        let shareButton = document.getElementById("shareButton");
+        if (data.summary) {
+          summaryText.textContent = data.summary;
+          readingTime.textContent = "Original Reading Time: " + data.original_reading_time + " min, Summary Reading Time: " + data.summary_reading_time + " min";
+          downloadLink.href = "/download/" + data.download_link;
+          downloadLink.style.display = "inline-block";
+          summaryBox.style.display = "block";
+          const shareText = encodeURIComponent(data.summary);
+          const shareUrl = encodeURIComponent(window.location.href);
+          shareButton.onclick = function() {
+            const shareOptions = [
+              { name: 'Email', url: `mailto:?subject=Research Paper Summary&body=${shareText} ${shareUrl}` },
+              { name: 'Twitter', url: `https://twitter.com/share?text=${shareText}&url=${shareUrl}` },
+              { name: 'Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` }
+            ];
+            const shareChoice = prompt("Share via:\n1. Email\n2. Twitter\n3. Facebook", "1");
+            if (shareChoice && shareOptions[parseInt(shareChoice) - 1]) {
+              window.open(shareOptions[parseInt(shareChoice) - 1].url, '_blank');
             }
-
-            fetch("/summarize", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                let summaryBox = document.getElementById("summaryBox");
-                let summaryText = document.getElementById("summaryText");
-                let readingTime = document.getElementById("readingTime");
-                let downloadLink = document.getElementById("downloadLink");
-                let shareButton = document.getElementById("shareButton");
-
-                if (data.summary) {
-                    summaryText.textContent = data.summary;
-                    // Update reading time display using returned values
-                    readingTime.textContent = "Original Reading Time: " + data.original_reading_time + " min, Summary Reading Time: " + data.summary_reading_time + " min";
-                    downloadLink.href = "/download/" + data.download_link;
-                    downloadLink.style.display = "inline-block"; // Show the download link
-                    summaryBox.style.display = "block";
-
-                    // Enable share button functionality
-                    const shareText = encodeURIComponent(data.summary);
-                    const shareUrl = encodeURIComponent(window.location.href);
-
-                    shareButton.onclick = function() {
-                        const shareOptions = [
-                            {
-                                name: 'Email',
-                                url: `mailto:?subject=Research Paper Summary&body=${shareText} ${shareUrl}`
-                            },
-                            {
-                                name: 'Twitter',
-                                url: `https://twitter.com/share?text=${shareText}&url=${shareUrl}`
-                            },
-                            {
-                                name: 'Facebook',
-                                url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`
-                            }
-                        ];
-
-                        // Prompt user to select sharing method
-                        const shareChoice = prompt("Share via:\n1. Email\n2. Twitter\n3. Facebook", "1");
-                        if (shareChoice && shareOptions[parseInt(shareChoice) - 1]) {
-                            window.open(shareOptions[parseInt(shareChoice) - 1].url, '_blank');
-                        }
-                    };
-
-                    document.getElementById('papers-count').textContent = data.papers_count;
-                } else {
-                    alert("❌ Failed to generate summary. Try again!");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        });
-
-        fetch('/get_count')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('papers-count').textContent = data.papers_count;
-            });
-
-        function updateProgress(progress) {
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${progress}%`;
-            progressBar.setAttribute('aria-valuenow', progress);
+          };
+          document.getElementById('papers-count').textContent = data.papers_count;
+        } else {
+          alert("❌ Failed to generate summary. Try again!");
         }
-
-        // Add event listener for upload progress
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
-            const progressDiv = document.createElement('div');
-            progressDiv.innerHTML = `
-                <div class="progress">
-                    <div id="progress-bar" class="progress-bar" role="progressbar" 
-                         style="width: 0%" aria-valuenow="0" aria-valuemin="0" 
-                         aria-valuemax="100"></div>
-                </div>
-            `;
-            form.appendChild(progressDiv);
-        });
-    </script>
-
-    <footer style="text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; background-color: #0d6efd; color: white; display: flex; justify-content: center; align-items: center;">
-        <p style="margin: 0; font-size: 14px;">
-            &copy; Made with ❤️ by <a href="https://twitter.com/futurebeast_04" style="text-decoration: none; color: white;" target="_blank">@futurebeast_04</a>
-        </p>
-    </footer>
+      })
+      .catch(error => console.error("Error:", error));
+    });
+    fetch('/get_count')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('papers-count').textContent = data.papers_count;
+      });
+  </script>
+  <footer>
+    <p style="margin: 0; font-size: 20px;">
+      &copy; Made with ❤️ by <a href="https://twitter.com/futurebeast_04" target="_blank">@futurebeast_04</a>
+    </p>
+  </footer>
 </body>
 </html>
+
 
 
