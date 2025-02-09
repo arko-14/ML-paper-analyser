@@ -25,8 +25,32 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 
-# Global summary counter
-summary_counter = 0
+# ----------------------------
+# Counter Persistence Functions
+# ----------------------------
+COUNTER_FILE = "counter.txt"
+
+def load_counter():
+    """Load the counter from file. Returns 0 if the file doesn't exist or is invalid."""
+    if os.path.exists(COUNTER_FILE):
+        try:
+            with open(COUNTER_FILE, "r") as f:
+                return int(f.read().strip())
+        except Exception as e:
+            print("Error loading counter:", e)
+            return 0
+    return 0
+
+def save_counter(counter):
+    """Save the counter value to a file."""
+    try:
+        with open(COUNTER_FILE, "w") as f:
+            f.write(str(counter))
+    except Exception as e:
+        print("Error saving counter:", e)
+
+# Global summary counter is now loaded from file at startup
+summary_counter = load_counter()
 
 # ----------------------------
 # Utility Functions
@@ -149,7 +173,14 @@ def summarize_with_gemini(text):
     """
     try:
         model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(f"Summarize this research paper comprehensively across these key dimensions:\n\nResearch Context:\n- Domain\n- Research Question\n- Significance\n\nMethodology:\n- Design\n- Data Collection\n- Analytical Approach\n\nKey Findings:\n- Primary Outcomes\n- Statistical Significance\n- Novel Discoveries\n\nImplications:\n- Theoretical Impact\n- Practical Applications\n- Future Research Directions\n\nPaper Text:\n{text}")
+        response = model.generate_content(
+            f"Summarize this research paper comprehensively across these key dimensions:\n\n"
+            f"Research Context:\n- Domain\n- Research Question\n- Significance\n\n"
+            f"Methodology:\n- Design\n- Data Collection\n- Analytical Approach\n\n"
+            f"Key Findings:\n- Primary Outcomes\n- Statistical Significance\n- Novel Discoveries\n\n"
+            f"Implications:\n- Theoretical Impact\n- Practical Applications\n- Future Research Directions\n\n"
+            f"Paper Text:\n{text}"
+        )
         if response and response.text:
             return response.text
     except Exception as e:
@@ -161,10 +192,10 @@ def summarize_with_gemini(text):
 # ----------------------------
 # New Utility: Reading Time Estimation
 # ----------------------------
-def estimate_reading_time(text, words_per_minute=80):
+def estimate_reading_time(text, words_per_minute=200):
     """
     Calculates estimated reading time in hours and minutes based on word count.
-    Returns a string in the format "X hrs Y" (do not append additional units).
+    Returns a string in the format "X hrs Y" (without extra units).
     """
     word_count = len(text.split())
     total_seconds = (word_count / words_per_minute) * 60
@@ -203,8 +234,9 @@ def summarize():
     with open(summary_path, "w") as summary_file:
         summary_file.write(summary)
 
-    # Increment summary counter
+    # Increment summary counter and save it to disk
     summary_counter += 1
+    save_counter(summary_counter)
 
     # Estimate reading times
     original_reading_time = estimate_reading_time(text)
@@ -232,4 +264,3 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
-
