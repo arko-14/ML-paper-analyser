@@ -161,7 +161,7 @@ def summarize_with_gemini(text):
 # ----------------------------
 # New Utility: Reading Time Estimation
 # ----------------------------
-def estimate_reading_time(text, words_per_minute=200):
+def estimate_reading_time(text, words_per_minute=80):
     """
     Calculates estimated reading time in hours and minutes based on word count.
     Returns a string in the format "X hrs Y" (do not append additional units).
