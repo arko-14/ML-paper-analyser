@@ -1,9 +1,8 @@
 import os
 import re
 import requests
-import pdfplumber
+import fitz  # PyMuPDF for PDF extraction
 import google.generativeai as genai
-from bs4 import BeautifulSoup
 from flask import Flask, render_template, request, jsonify, send_file
 
 # Fallback summarizer libraries for TextRank
@@ -16,6 +15,9 @@ try:
     from gensim.summarization import summarize as gensim_summarize
 except ImportError:
     gensim_summarize = None
+
+# Import Requests-HTML for improved URL text extraction
+from requests_html import HTMLSession
 
 # 🔹 Replace this with your actual Gemini API key
 GEMINI_API_KEY = "AIzaSyDJiCkjjOJzbQP3kDu7F5ku9CuSOMy4JBk"
@@ -56,24 +58,27 @@ summary_counter = load_counter()
 # Utility Functions
 # ----------------------------
 def extract_text_from_pdf(pdf_path):
-    """Extracts text from a PDF file, skipping pages with no text."""
+    """Extracts text from a PDF file, skipping pages with no text using PyMuPDF."""
     text = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            page_text = page.extract_text()
+    try:
+        doc = fitz.open(pdf_path)
+        for page in doc:
+            page_text = page.get_text()
             if page_text:
                 text.append(page_text)
+        doc.close()
+    except Exception as e:
+        print("Error extracting text from PDF:", e)
     return "\n".join(text).strip()
 
 def extract_text_from_url(url):
-    """Extracts text from a webpage URL."""
+    """Extracts text from a webpage URL using Requests-HTML."""
     try:
-        response = requests.get(url, timeout=10)
-        if response.status_code != 200:
-            return None
-        soup = BeautifulSoup(response.text, "html.parser")
-        paragraphs = soup.find_all("p")
-        text = "\n".join([p.get_text() for p in paragraphs])
+        session = HTMLSession()
+        response = session.get(url, timeout=10)
+        # Render the page to capture JavaScript-rendered content (adjust sleep if needed)
+        response.html.render(timeout=20, sleep=1)
+        text = response.html.text
         return text.strip() if text else None
     except Exception as e:
         print("Error extracting text from URL:", e)
