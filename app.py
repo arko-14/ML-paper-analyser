@@ -19,6 +19,9 @@ except ImportError:
 # Import Requests-HTML for improved URL text extraction
 from requests_html import HTMLSession
 
+# Import FPDF for PDF generation
+from fpdf import FPDF
+
 # 🔹 Replace this with your actual Gemini API key
 GEMINI_API_KEY = "AIzaSyDJiCkjjOJzbQP3kDu7F5ku9CuSOMy4JBk"
 
@@ -188,6 +191,34 @@ def format_gemini_response(text):
     return text.strip()
 
 # ----------------------------
+# New Utility: Save Summary as PDF
+# ----------------------------
+def save_summary_as_pdf(summary, pdf_path):
+    """Generates a PDF file from the summary text using FPDF."""
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, summary)
+        pdf.output(pdf_path)
+    except Exception as e:
+        print("Error generating PDF:", e)
+
+# ----------------------------
+# New Utility: Reading Time Estimation
+# ----------------------------
+def estimate_reading_time(text, words_per_minute=80):
+    """
+    Calculates estimated reading time in hours and minutes based on word count.
+    Returns a string in the format "X hrs Y" (without extra units).
+    """
+    word_count = len(text.split())
+    total_seconds = (word_count / words_per_minute) * 60
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    return f"{hours} hrs {minutes}"
+
+# ----------------------------
 # Primary Summarization Function
 # ----------------------------
 def summarize_with_gemini(text):
@@ -215,20 +246,6 @@ def summarize_with_gemini(text):
     return fallback_summarizer(text)
 
 # ----------------------------
-# New Utility: Reading Time Estimation
-# ----------------------------
-def estimate_reading_time(text, words_per_minute=80):
-    """
-    Calculates estimated reading time in hours and minutes based on word count.
-    Returns a string in the format "X hrs Y" (without extra units).
-    """
-    word_count = len(text.split())
-    total_seconds = (word_count / words_per_minute) * 60
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    return f"{hours} hrs {minutes}"
-
-# ----------------------------
 # Flask Routes
 # ----------------------------
 @app.route("/")
@@ -253,11 +270,16 @@ def summarize():
 
     summary = summarize_with_gemini(text)
 
-    # Create a summary file
+    # Create a text summary file
     summary_filename = "summary.txt"
     summary_path = os.path.join("uploads", summary_filename)
     with open(summary_path, "w") as summary_file:
         summary_file.write(summary)
+
+    # Create a PDF summary file (new download option)
+    pdf_summary_filename = "summary.pdf"
+    pdf_summary_path = os.path.join("uploads", pdf_summary_filename)
+    save_summary_as_pdf(summary, pdf_summary_path)
 
     # Increment summary counter and save it to disk
     summary_counter += 1
@@ -270,6 +292,7 @@ def summarize():
     return jsonify({
         "summary": summary,
         "download_link": summary_filename,
+        "download_link_pdf": pdf_summary_filename,
         "papers_count": summary_counter,
         "original_reading_time": original_reading_time,
         "summary_reading_time": summary_reading_time
@@ -289,4 +312,5 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
+
 
