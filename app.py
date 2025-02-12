@@ -19,7 +19,7 @@ except ImportError:
 # Import Requests-HTML for improved URL text extraction
 from requests_html import HTMLSession
 
-# Import FPDF for PDF generation
+# Import FPDF from fpdf2 for PDF generation
 from fpdf import FPDF
 
 # 🔹 Replace this with your actual Gemini API key
@@ -108,7 +108,7 @@ def text_rank_summarizer(text):
     try:
         parser = PlaintextParser.from_string(text, Tokenizer("english"))
         summarizer = TextRankSummarizer()
-        summary_sentences = summarizer(parser.document, 100)  # Extract 5 key sentences
+        summary_sentences = summarizer(parser.document, 100)  # Extract key sentences
         summary = " ".join(str(sentence) for sentence in summary_sentences)
         if summary:
             return summary
@@ -124,9 +124,7 @@ def gensim_nlp_summarizer(text):
     if not gensim_summarize:
         print("Gensim is not available.")
         return None
-
     try:
-        # Gensim's summarize may fail if the text is too short or not well-formed.
         summary = gensim_summarize(text)
         if summary:
             return summary
@@ -164,11 +162,9 @@ def fallback_summarizer(text):
     summary = text_rank_summarizer(limited_text)
     if summary and summary.strip():
         return summary
-
     summary = gensim_nlp_summarizer(limited_text)
     if summary and summary.strip():
         return summary
-
     return simple_fallback_summarizer(limited_text)
 
 # ----------------------------
@@ -186,7 +182,6 @@ def format_gemini_response(text):
         "Implications:"
     ]
     for header in section_headers:
-        # Insert two newlines before the header if not already present.
         text = text.replace(header, "\n\n" + header + "\n")
     return text.strip()
 
@@ -198,9 +193,10 @@ def save_summary_as_pdf(summary, pdf_path):
     try:
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("Helvetica", size=12)
         pdf.multi_cell(0, 10, summary)
-        pdf.output(pdf_path)
+        # Write the PDF directly to disk
+        pdf.output(pdf_path, 'F')
     except Exception as e:
         print("Error generating PDF:", e)
 
@@ -210,7 +206,7 @@ def save_summary_as_pdf(summary, pdf_path):
 def estimate_reading_time(text, words_per_minute=80):
     """
     Calculates estimated reading time in hours and minutes based on word count.
-    Returns a string in the format "X hrs Y" (without extra units).
+    Returns a string in the format "X hrs Y".
     """
     word_count = len(text.split())
     total_seconds = (word_count / words_per_minute) * 60
@@ -237,12 +233,9 @@ def summarize_with_gemini(text):
             f"Paper Text:\n{text}"
         )
         if response and response.text:
-            # Format the response for better readability.
             return format_gemini_response(response.text)
     except Exception as e:
         print("Gemini API failed:", e)
-
-    # If Gemini summarization fails, use fallback summarization techniques
     return fallback_summarizer(text)
 
 # ----------------------------
@@ -303,7 +296,10 @@ def download_file(filename):
     try:
         file_path = os.path.join("uploads", filename)
         if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True)
+            if filename.lower().endswith('.pdf'):
+                return send_file(file_path, as_attachment=True, mimetype='application/pdf')
+            else:
+                return send_file(file_path, as_attachment=True)
         else:
             return jsonify({"error": "File not found!"}), 404
     except Exception as e:
@@ -312,5 +308,6 @@ def download_file(filename):
 if __name__ == "__main__":
     os.makedirs("uploads", exist_ok=True)
     app.run(debug=True)
+
 
 
