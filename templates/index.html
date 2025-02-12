@@ -96,7 +96,7 @@
       background: #ff4757;
     }
 
-    .share-btn {
+    .share-btn, .tts-btn {
       margin-top: 15px;
       padding: 10px;
       background: #ff6b6b;
@@ -107,9 +107,10 @@
       transition: background 0.3s ease-in-out;
     }
 
-    .share-btn:hover {
+    .share-btn:hover, .tts-btn:hover {
       background: #ff4757;
     }
+    
     footer a {
       text-decoration: none;
       color: #fff;
@@ -128,10 +129,12 @@
     <div class="summary-box" id="summaryBox">
       <h3>📌 Summary:</h3>
       <p id="summaryText"></p>
-      <!-- New reading time display element -->
+      <!-- Display reading times -->
       <p id="readingTime"></p>
       <a id="downloadLink" class="download-link" href="" download>Download Summary</a>
       <button id="shareButton" class="share-btn">Share</button>
+      <!-- New TTS Button -->
+      <button id="ttsButton" class="tts-btn">Listen</button>
     </div>
     <div id="counter-display">
       Papers Summarized: <span id="papers-count">0</span>
@@ -162,12 +165,15 @@
         let readingTime = document.getElementById("readingTime");
         let downloadLink = document.getElementById("downloadLink");
         let shareButton = document.getElementById("shareButton");
+        let ttsButton = document.getElementById("ttsButton");
         if (data.summary) {
           summaryText.textContent = data.summary;
           readingTime.textContent = "Original Reading Time: " + data.original_reading_time + " min, Summary Reading Time: " + data.summary_reading_time + " min";
           downloadLink.href = "/download/" + data.download_link;
           downloadLink.style.display = "inline-block";
           summaryBox.style.display = "block";
+          
+          // Share button functionality
           const shareText = encodeURIComponent(data.summary);
           const shareUrl = encodeURIComponent(window.location.href);
           shareButton.onclick = function() {
@@ -181,13 +187,50 @@
               window.open(shareOptions[parseInt(shareChoice) - 1].url, '_blank');
             }
           };
+
+         // TTS button functionality using the Web Speech API
+ttsButton.onclick = function() {
+  let summary = summaryText.textContent;
+  // Remove asterisks (and you can add other unwanted characters here)
+  let cleanSummary = summary.replace(/\*/g, "");
+  if (cleanSummary && cleanSummary.trim().length > 0) {
+    let utterance = new SpeechSynthesisUtterance(cleanSummary);
+    // Retrieve available voices
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = function() {
+        voices = window.speechSynthesis.getVoices();
+        let indianVoice = voices.find(voice => voice.lang === "en-IN") || voices[0];
+        utterance.voice = indianVoice;
+        utterance.rate = 0.9;  // slightly slower for calmness
+        utterance.pitch = 0.9; // lower pitch for calm tone
+        window.speechSynthesis.speak(utterance);
+      };
+    } else {
+      let indianVoice = voices.find(voice => voice.lang === "en-IN") || voices[0];
+      utterance.voice = indianVoice;
+      utterance.rate = 0.9;
+      utterance.pitch = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  } else {
+    alert("No summary available for speech.");
+  }
+};
+
+              
+
           document.getElementById('papers-count').textContent = data.papers_count;
         } else {
           alert("❌ Failed to generate summary. Try again!");
         }
       })
-      .catch(error => console.error("Error:", error));
+      .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred while processing the request.");
+      });
     });
+
     fetch('/get_count')
       .then(response => response.json())
       .then(data => {
