@@ -1,6 +1,6 @@
 # Paperdigest
 
-Paperdigest is an AI-powered research paper summarizer that distills lengthy academic texts into concise, easy-to-read summaries. It leverages the Gemini API as the primary summarization engine with fallback options (using Sumy's TextRank and Gensim), offers estimated reading times, and provides accessibility features like Text-to-Speech (TTS). Users can download summaries in both plain text and PDF formats, share summaries via social media, and enjoy a clean, user-friendly web interface.
+Paperdigest is an AI-powered research paper summarizer that distills lengthy academic texts into concise, easy-to-read summaries. It leverages the Gemini API as the primary summarization engine with fallback options (using Sumy's TextRank and Gensim), offers estimated reading times, and provides accessibility features like Text-to-Speech (TTS). Users can download summaries & share summaries via social media, and enjoy a clean, user-friendly web interface.
 
 ## Features
 
@@ -161,5 +161,18 @@ The application will be accessible at http://127.0.0.1:5000/.
     
     The bottom of the page displays the number of papers summarized so far.
     
+## Contributing
 
-## Deployment
+Contributions are welcome! If you'd like to contribute:
+
+- Fork this repository.
+- Create a new branch for your feature or bugfix.
+- Submit a pull request describing your changes.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contact
+
+For questions, feedback, or suggestions, feel free to reach out via [Twitter](https://twitter.com/futurebeast_04) or open an issue in this repository.
