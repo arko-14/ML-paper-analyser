@@ -42,7 +42,7 @@ Paperdigest is an AI-powered research paper summarizer that distills lengthy aca
 
 ## Demo
 
-*(Include a screenshot or link to a live demo if available.)*
+Live project:-https://www.youtube.com/watch?v=LGfisfMf3cA
 
 ## Installation
 
